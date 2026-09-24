@@ -51,13 +51,21 @@ const errMsg = code =>
   : code === 'server' ? '서버에서 오류가 났어요. 잠시 후 다시 시도해 주세요.'
   : '요청을 처리하지 못했어요' + (code ? ` (${code})` : '') + '.';
 
-/** Apps Script 호출 — 헤더 없는 text/plain POST(사전 요청 없음), 토큰은 본문에 */
+/** Apps Script 호출 — 헤더 없는 text/plain POST(사전 요청 없음), 토큰은 본문에.
+    GAS가 드물게 일시적인 404·비JSON을 주므로, 다시 보내도 안전한 요청만 1회 재시도. */
 async function api(action, extra) {
-  const res = await fetch(CONN.api, { method: 'POST', body: JSON.stringify(Object.assign({ action, k: CONN.k }, extra || {})) });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const d = await res.json();
-  if (!d || d.ok !== true) throw new Error(errMsg(d && d.error));
-  return d;
+  const retryable = action !== 'addManual'; // addManual은 재시도하면 중복 저장 위험
+  let last = null;
+  for (let i = 0; i < (retryable ? 2 : 1); i++) {
+    if (i > 0) await new Promise(r => setTimeout(r, 1500));
+    const res = await fetch(CONN.api, { method: 'POST', body: JSON.stringify(Object.assign({ action, k: CONN.k }, extra || {})) });
+    if (!res.ok) { last = new Error('HTTP ' + res.status); continue; }
+    const d = await res.json().catch(() => null);
+    if (!d) { last = new Error('서버 응답을 읽지 못했어요. 잠시 후 다시 시도해 주세요.'); continue; }
+    if (d.ok !== true) throw new Error(errMsg(d.error));
+    return d;
+  }
+  throw last || new Error('요청을 처리하지 못했어요.');
 }
 
 /* ================= buckets (화면 표시용) ================= */
@@ -542,8 +550,12 @@ async function connect() {
   if (r.err) { say(r.err, true); return; }
   const btn = $('#connGo'); btn.disabled = true; say('연결을 확인하는 중…');
   try {
-    const res = await fetch(r.api, { method: 'POST', body: JSON.stringify({ action: 'getData', k: r.k }) });
-    let d = null; try { d = await res.json(); } catch (e) {}
+    let d = null;
+    for (let i = 0; i < 2 && !d; i++) { // 일시적인 404·비JSON은 한 번 더
+      if (i > 0) await new Promise(w => setTimeout(w, 1500));
+      const res = await fetch(r.api, { method: 'POST', body: JSON.stringify({ action: 'getData', k: r.k }) });
+      try { d = await res.json(); } catch (e) { d = null; }
+    }
     if (!d) { say('서버 응답을 읽지 못했어요. 연결 코드가 최신인지 확인해 주세요.', true); btn.disabled = false; return; }
     if (d.ok !== true) { say(d.error === 'token' ? '코드는 읽었지만 토큰이 맞지 않아요. 가장 최근에 받은 연결 코드인지 확인해 주세요.' : errMsg(d.error), true); btn.disabled = false; return; }
     LS.set(K_CONN, { api: r.api, k: r.k });
