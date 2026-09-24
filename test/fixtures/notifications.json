@@ -1,0 +1,512 @@
+{
+ "note": "파서·분류 계약. 모든 이름·계좌는 가명. settings.myName = \"홍길동\" 기준, 같은 날 같은 묶음으로 dedupe 적용한 결과.",
+ "settings": {
+  "myName": "홍길동",
+  "rules": [],
+  "overrides": {}
+ },
+ "cases": [
+  {
+   "id": "card-hyundai-approve",
+   "input": {
+    "ts": "2026-09-24 12:34:10",
+    "app": "현대카드",
+    "title": "현대카드 승인",
+    "body": "홍*동님 12,000원 일시불 09/24 12:34 스타벅스 역삼점 누적 1,234,567원"
+   },
+   "expect": {
+    "desc": "스타벅스 역삼점",
+    "amount": -12000,
+    "kind": "card",
+    "method": "현대카드",
+    "bucket": "spend",
+    "category": "카페/간식",
+    "reason": null
+   }
+  },
+  {
+   "id": "card-hyundai-cancel",
+   "input": {
+    "ts": "2026-09-24 14:03:20",
+    "app": "현대카드",
+    "title": "현대카드 승인취소",
+    "body": "홍*동님 23,900원 취소 09/24 14:03 쿠팡"
+   },
+   "expect": {
+    "desc": "쿠팡",
+    "amount": 23900,
+    "kind": "card",
+    "method": "현대카드",
+    "bucket": "spend",
+    "category": "온라인쇼핑",
+    "reason": "결제 취소·환불"
+   }
+  },
+  {
+   "id": "card-shinhan",
+   "input": {
+    "ts": "2026-09-24 12:05:05",
+    "app": "신한 SOL페이",
+    "title": "신한카드",
+    "body": "[신한카드(1234)승인] 홍*동 9,500원(일시불)09/24 12:05 김밥천국 누적9,500원"
+   },
+   "expect": {
+    "desc": "김밥천국",
+    "amount": -9500,
+    "kind": "card",
+    "method": "신한카드",
+    "bucket": "spend",
+    "category": "식비",
+    "reason": null
+   }
+  },
+  {
+   "id": "card-kb-check",
+   "input": {
+    "ts": "2026-09-24 21:14:02",
+    "app": "KB Pay",
+    "title": "KB국민카드",
+    "body": "KB국민체크(5678)승인 홍*동님 6,800원 일시불 09/24 21:14 GS25 역삼점 누적6,800원"
+   },
+   "expect": {
+    "desc": "GS25 역삼점",
+    "amount": -6800,
+    "kind": "card",
+    "method": "KB국민카드",
+    "bucket": "spend",
+    "category": "편의점/마트",
+    "reason": null
+   }
+  },
+  {
+   "id": "bank-kb-checkcard-dup",
+   "input": {
+    "ts": "2026-09-24 21:14:30",
+    "app": "KB스타뱅킹",
+    "title": "[KB국민] 출금",
+    "body": "09/24 21:14 123-45**-678 체크카드출금 6,800원 GS25 잔액 1,203,200원"
+   },
+   "expect": {
+    "desc": "GS25",
+    "amount": -6800,
+    "kind": "bank",
+    "method": "KB스타뱅킹",
+    "bucket": "excl",
+    "category": null,
+    "reason": "중복 알림 — 같은 결제가 다른 앱에도 잡힘"
+   }
+  },
+  {
+   "id": "card-installment",
+   "input": {
+    "ts": "2026-09-24 15:00:11",
+    "app": "현대카드",
+    "title": "현대카드 승인",
+    "body": "홍*동님 360,000원 3개월 할부 09/24 15:00 하이마트 강남점 누적 1,594,567원"
+   },
+   "expect": {
+    "desc": "하이마트 강남점",
+    "amount": -360000,
+    "kind": "card",
+    "method": "현대카드",
+    "bucket": "spend",
+    "category": "생활",
+    "reason": null
+   }
+  },
+  {
+   "id": "card-subscription",
+   "input": {
+    "ts": "2026-09-24 03:05:40",
+    "app": "신한 SOL페이",
+    "title": "신한카드",
+    "body": "[신한카드(1234)승인] 홍*동 17,000원(일시불)09/24 03:05 넷플릭스 누적26,500원"
+   },
+   "expect": {
+    "desc": "넷플릭스",
+    "amount": -17000,
+    "kind": "card",
+    "method": "신한카드",
+    "bucket": "fixed",
+    "category": "구독",
+    "reason": "매달 나가는 돈"
+   }
+  },
+  {
+   "id": "card-telecom",
+   "input": {
+    "ts": "2026-09-24 04:12:00",
+    "app": "현대카드",
+    "title": "현대카드 승인",
+    "body": "홍*동님 69,000원 일시불 09/24 04:12 SKT통신요금 누적 1,663,567원"
+   },
+   "expect": {
+    "desc": "SKT통신요금",
+    "amount": -69000,
+    "kind": "card",
+    "method": "현대카드",
+    "bucket": "fixed",
+    "category": "통신",
+    "reason": "매달 나가는 돈"
+   }
+  },
+  {
+   "id": "card-delivery-corp",
+   "input": {
+    "ts": "2026-09-24 19:40:08",
+    "app": "현대카드",
+    "title": "현대카드 승인",
+    "body": "홍*동님 21,500원 일시불 09/24 19:40 (주)우아한형제들 누적 1,685,067원"
+   },
+   "expect": {
+    "desc": "우아한형제들",
+    "amount": -21500,
+    "kind": "card",
+    "method": "현대카드",
+    "bucket": "spend",
+    "category": "배달",
+    "reason": null
+   }
+  },
+  {
+   "id": "pay-kakao",
+   "input": {
+    "ts": "2026-09-24 20:40:30",
+    "app": "카카오페이",
+    "title": "결제 완료",
+    "body": "배달의민족에서 22,000원 결제했어요"
+   },
+   "expect": {
+    "desc": "배달의민족",
+    "amount": -22000,
+    "kind": "pay",
+    "method": "카카오페이",
+    "bucket": "excl",
+    "category": null,
+    "reason": "중복 알림 — 같은 결제가 다른 앱에도 잡힘"
+   }
+  },
+  {
+   "id": "card-for-kakao-dup",
+   "input": {
+    "ts": "2026-09-24 20:40:12",
+    "app": "현대카드",
+    "title": "현대카드 승인",
+    "body": "홍*동님 22,000원 일시불 09/24 20:40 배달의민족 누적 1,707,067원"
+   },
+   "expect": {
+    "desc": "배달의민족",
+    "amount": -22000,
+    "kind": "card",
+    "method": "현대카드",
+    "bucket": "spend",
+    "category": "배달",
+    "reason": null
+   }
+  },
+  {
+   "id": "bank-out-person",
+   "input": {
+    "ts": "2026-09-24 08:10:03",
+    "app": "KB스타뱅킹",
+    "title": "[KB국민] 출금",
+    "body": "09/24 08:10 123-45**-678 출금 650,000원 김영희 잔액 1,830,000원"
+   },
+   "expect": {
+    "desc": "김영희",
+    "amount": -650000,
+    "kind": "bank",
+    "method": "KB스타뱅킹",
+    "bucket": "review",
+    "category": null,
+    "reason": "누구에게 보낸 돈인지 확인 필요"
+   }
+  },
+  {
+   "id": "bank-card-bill-hyundai",
+   "input": {
+    "ts": "2026-09-24 07:05:10",
+    "app": "KB스타뱅킹",
+    "title": "[KB국민] 출금",
+    "body": "09/24 07:05 123-45**-678 출금 812,340원 현대카드 잔액 1,017,660원"
+   },
+   "expect": {
+    "desc": "현대카드",
+    "amount": -812340,
+    "kind": "bank",
+    "method": "KB스타뱅킹",
+    "bucket": "excl",
+    "category": null,
+    "reason": "카드대금 — 카드 사용 내역과 이중계산"
+   }
+  },
+  {
+   "id": "bank-card-bill-word",
+   "input": {
+    "ts": "2026-09-24 07:06:10",
+    "app": "KB스타뱅킹",
+    "title": "[KB국민] 출금",
+    "body": "09/24 07:06 123-45**-678 출금 401,200원 신한카드결제대금 잔액 616,460원"
+   },
+   "expect": {
+    "desc": "신한카드 대금",
+    "amount": -401200,
+    "kind": "bank",
+    "method": "KB스타뱅킹",
+    "bucket": "excl",
+    "category": null,
+    "reason": "카드대금 — 카드 사용 내역과 이중계산"
+   }
+  },
+  {
+   "id": "bank-salary",
+   "input": {
+    "ts": "2026-09-24 09:02:00",
+    "app": "KB스타뱅킹",
+    "title": "[KB국민] 입금",
+    "body": "09/24 09:02 123-45**-678 입금 3,850,000원 (주)한빛테크급여 잔액 4,466,460원"
+   },
+   "expect": {
+    "desc": "한빛테크급여",
+    "amount": 3850000,
+    "kind": "bank",
+    "method": "KB스타뱅킹",
+    "bucket": "income",
+    "category": null,
+    "reason": "급여·환급"
+   }
+  },
+  {
+   "id": "kakaobank-saving",
+   "input": {
+    "ts": "2026-09-24 10:00:00",
+    "app": "카카오뱅크",
+    "title": "출금",
+    "body": "출금 500,000원 | 자유적금"
+   },
+   "expect": {
+    "desc": "자유적금",
+    "amount": -500000,
+    "kind": "bank",
+    "method": "카카오뱅크",
+    "bucket": "save",
+    "category": null,
+    "reason": "저축·투자 이체"
+   }
+  },
+  {
+   "id": "kakaobank-own-in",
+   "input": {
+    "ts": "2026-09-24 12:40:20",
+    "app": "카카오뱅크",
+    "title": "입금",
+    "body": "입금 1,000,000원 | 홍길동"
+   },
+   "expect": {
+    "desc": "홍길동",
+    "amount": 1000000,
+    "kind": "bank",
+    "method": "카카오뱅크",
+    "bucket": "excl",
+    "category": null,
+    "reason": "내 계좌 간 이체"
+   }
+  },
+  {
+   "id": "bank-own-out",
+   "input": {
+    "ts": "2026-09-24 12:40:05",
+    "app": "KB스타뱅킹",
+    "title": "[KB국민] 출금",
+    "body": "09/24 12:40 123-45**-678 출금 1,000,000원 홍길동 잔액 3,466,460원"
+   },
+   "expect": {
+    "desc": "홍길동",
+    "amount": -1000000,
+    "kind": "bank",
+    "method": "KB스타뱅킹",
+    "bucket": "excl",
+    "category": null,
+    "reason": "내 계좌 간 이체"
+   }
+  },
+  {
+   "id": "kakaobank-interest",
+   "input": {
+    "ts": "2026-09-24 00:10:00",
+    "app": "카카오뱅크",
+    "title": "입금",
+    "body": "입금 1,250원 | 예금이자"
+   },
+   "expect": {
+    "desc": "예금이자",
+    "amount": 1250,
+    "kind": "bank",
+    "method": "카카오뱅크",
+    "bucket": "income",
+    "category": null,
+    "reason": "이자·배당"
+   }
+  },
+  {
+   "id": "bank-invest",
+   "input": {
+    "ts": "2026-09-24 10:20:00",
+    "app": "KB스타뱅킹",
+    "title": "[KB국민] 출금",
+    "body": "09/24 10:20 123-45**-678 출금 300,000원 미래에셋증권 잔액 3,166,460원"
+   },
+   "expect": {
+    "desc": "미래에셋증권",
+    "amount": -300000,
+    "kind": "bank",
+    "method": "KB스타뱅킹",
+    "bucket": "save",
+    "category": null,
+    "reason": "저축·투자 이체"
+   }
+  },
+  {
+   "id": "bank-fixed-mgmt",
+   "input": {
+    "ts": "2026-09-24 06:05:00",
+    "app": "KB스타뱅킹",
+    "title": "[KB국민] 출금",
+    "body": "09/24 06:05 123-45**-678 출금 183,000원 아파트관리비 잔액 2,983,460원"
+   },
+   "expect": {
+    "desc": "아파트관리비",
+    "amount": -183000,
+    "kind": "bank",
+    "method": "KB스타뱅킹",
+    "bucket": "fixed",
+    "category": "관리비",
+    "reason": "매달 나가는 돈"
+   }
+  },
+  {
+   "id": "toss-send",
+   "input": {
+    "ts": "2026-09-24 21:30:00",
+    "app": "토스",
+    "title": "송금 완료",
+    "body": "박지훈님에게 32,000원을 보냈어요"
+   },
+   "expect": {
+    "desc": "박지훈",
+    "amount": -32000,
+    "kind": "bank",
+    "method": "토스",
+    "bucket": "review",
+    "category": null,
+    "reason": "누구에게 보낸 돈인지 확인 필요"
+   }
+  },
+  {
+   "id": "toss-receive",
+   "input": {
+    "ts": "2026-09-24 21:45:00",
+    "app": "토스",
+    "title": "입금",
+    "body": "홍길순님이 50,000원을 보냈어요"
+   },
+   "expect": {
+    "desc": "홍길순",
+    "amount": 50000,
+    "kind": "bank",
+    "method": "토스",
+    "bucket": "excl",
+    "category": null,
+    "reason": "들어온 돈 — 수입이면 바꿔주세요"
+   }
+  },
+  {
+   "id": "toss-money-charge",
+   "input": {
+    "ts": "2026-09-24 19:12:30",
+    "app": "토스",
+    "title": "토스머니",
+    "body": "토스머니 30,000원 충전 완료"
+   },
+   "expect": {
+    "desc": "토스머니 충전",
+    "amount": -30000,
+    "kind": "pay",
+    "method": "토스",
+    "bucket": "excl",
+    "category": null,
+    "reason": "페이머니 충전 — 실제 결제는 따로 잡힘"
+   }
+  },
+  {
+   "id": "bank-pay-charge",
+   "input": {
+    "ts": "2026-09-24 19:12:10",
+    "app": "KB스타뱅킹",
+    "title": "[KB국민] 출금",
+    "body": "09/24 19:12 123-45**-678 출금 30,000원 토스 잔액 2,953,460원"
+   },
+   "expect": {
+    "desc": "토스",
+    "amount": -30000,
+    "kind": "bank",
+    "method": "KB스타뱅킹",
+    "bucket": "excl",
+    "category": null,
+    "reason": "페이머니 충전 — 실제 결제는 따로 잡힘"
+   }
+  },
+  {
+   "id": "unrec-due-notice",
+   "input": {
+    "ts": "2026-09-24 18:00:00",
+    "app": "현대카드",
+    "title": "결제 예정 금액 안내",
+    "body": "9월 결제 예정 금액 812,340원입니다. 결제일 14일"
+   },
+   "expect": {
+    "unrecognized": true,
+    "reason": "금액을 찾지 못했어요"
+   }
+  },
+  {
+   "id": "unrec-overseas",
+   "input": {
+    "ts": "2026-09-24 14:00:00",
+    "app": "현대카드",
+    "title": "해외승인",
+    "body": "USD 12.99 승인 NETFLIX.COM"
+   },
+   "expect": {
+    "unrecognized": true,
+    "reason": "해외 결제 — 원화 금액이 없어요"
+   }
+  },
+  {
+   "id": "unrec-marketing",
+   "input": {
+    "ts": "2026-09-24 13:10:00",
+    "app": "현대카드",
+    "title": "이번 달 혜택",
+    "body": "M포인트 적립 이벤트를 확인하세요"
+   },
+   "expect": {
+    "unrecognized": true,
+    "reason": "금액을 찾지 못했어요"
+   }
+  }
+ ],
+ "aggregate_2026_09": {
+  "spend": 407900,
+  "fixed": 269000,
+  "save": 800000,
+  "review": 682000,
+  "income": 3851250,
+  "exclOut": 2302340,
+  "exclIn": 1050000,
+  "net": 676900,
+  "outTotal": 4461240,
+  "unrecognized": 3,
+  "transactions": 25
+ }
+}

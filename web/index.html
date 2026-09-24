@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>순소비 캘린더</title>
+<meta name="description" content="카드·은행 알림으로 자동 기록하는 1인용 가계부. 카드대금·내 계좌 이체는 빼고 봅니다.">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f2f4f7">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0c0f14">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="./icons/icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="순소비">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand">
+      <h1>순소비 캘린더</h1>
+      <p id="subline">카드·은행 알림으로 자동 기록, 카드대금·내 계좌 이체는 빼고 봅니다</p>
+    </div>
+    <div class="tools" id="tools">
+      <div class="mnav" role="group" aria-label="월 이동">
+        <button id="prevM" type="button" aria-label="이전 달"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M9 2.5 4.5 7 9 11.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <span class="mlabel" id="mLabel" aria-live="polite">—</span>
+        <button id="nextM" type="button" aria-label="다음 달"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 2.5 9.5 7 5 11.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <a class="btn" id="openSetup" href="./setup.html">설치 안내</a>
+      <button class="btn" id="refresh" type="button" hidden>새로고침</button>
+      <button class="btn" id="openAdd" type="button" aria-expanded="false" aria-controls="addPanel">직접 추가</button>
+      <button class="btn" id="openSettings" type="button" aria-expanded="false" aria-controls="settings">분류 설정</button>
+    </div>
+  </header>
+
+  <section class="panel drawer" id="connect" hidden aria-labelledby="connTitle">
+    <div class="phead" style="margin-bottom:0"><h2 class="ptitle" id="connTitle">내 시트와 연결</h2><button class="btn quiet" type="button" data-close="connect" hidden id="connClose">닫기</button></div>
+    <p class="psub" style="margin:0">설치가 끝나면 받은 <b>연결 코드</b>(SNS1.으로 시작)를 붙여넣으세요. 아이폰은 먼저 Safari 공유 › <b>홈 화면에 추가</b>를 한 뒤, 홈 화면 앱 안에서 붙여넣어야 합니다 (Safari와 저장공간이 따로예요).</p>
+    <div class="field"><label for="connCode">연결 코드</label><textarea id="connCode" class="inp conn-code" placeholder="SNS1.…" autocomplete="off" spellcheck="false"></textarea></div>
+    <div class="conn-actions">
+      <button class="btn primary" id="connGo" type="button">연결</button>
+      <button class="btn" id="connDemo" type="button">예시 데이터 보기</button>
+      <a class="btn quiet" href="./setup.html">설치 안내 보기</a>
+    </div>
+    <div id="connMsg" role="status"></div>
+  </section>
+
+  <div id="appUI" style="display:contents">
+    <section class="panel drawer" id="addPanel" hidden aria-labelledby="addTitle"></section>
+    <section class="panel drawer" id="settings" hidden aria-labelledby="setTitle"></section>
+
+    <div id="banner"></div>
+
+    <section class="panel hero" id="hero" aria-label="이번 달 요약"></section>
+
+    <div class="main">
+      <section class="panel" aria-labelledby="calTitle">
+        <div class="phead"><h2 class="ptitle" id="calTitle">소비 캘린더</h2><span class="psub" id="calSub"></span></div>
+        <div class="cal-head" aria-hidden="true"><div class="sun">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="sat">토</div></div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="cal-foot">
+          <span class="heatkey">적게 <i style="background:var(--heat-1)"></i><i style="background:var(--heat-2)"></i><i style="background:var(--heat-3)"></i><i style="background:var(--heat-4)"></i> 많이 썼어요</span>
+          <span class="mkey" id="mkey"></span>
+        </div>
+      </section>
+      <section class="panel dayp" id="dayPanel" aria-live="polite"></section>
+    </div>
+
+    <div class="duo">
+      <section class="panel" aria-labelledby="catTitle">
+        <div class="phead"><h2 class="ptitle" id="catTitle">항목별 소비</h2><span class="psub" id="catSub"></span></div>
+        <div class="cats" id="cats"></div>
+        <div id="catRows"></div>
+      </section>
+      <section class="panel" aria-labelledby="trendTitle">
+        <div class="phead"><h2 class="ptitle" id="trendTitle">최근 6개월</h2><span class="psub">막대를 누르면 그 달로 이동</span></div>
+        <div class="tlegend" id="tlegend"></div>
+        <div id="trend"></div>
+        <details class="tv"><summary>표로 보기</summary><div class="tablewrap" id="trendTable"></div></details>
+      </section>
+    </div>
+
+    <div class="duo">
+      <section class="panel" aria-labelledby="flowTitle">
+        <div class="phead"><h2 class="ptitle" id="flowTitle">고정지출 · 저축 이체</h2><span class="psub">월세·관리비·적금처럼 매달 나가는 돈</span></div>
+        <div id="flows"></div>
+      </section>
+      <section class="panel" id="review" aria-labelledby="revTitle">
+        <div class="phead"><h2 class="ptitle" id="revTitle">확인할 것</h2></div>
+        <div id="reviewBody"></div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <details class="all" id="allDetails">
+        <summary id="allSummary">이번 달 거래 전체</summary>
+        <div class="chips" id="chips" role="group" aria-label="구분으로 거르기"></div>
+        <div class="tablewrap" id="allTable"></div>
+      </details>
+    </section>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script type="module" src="./app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => {}); });
+}
+</script>
+</body>
+</html>

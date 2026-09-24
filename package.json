@@ -1,0 +1,21 @@
+{
+  "name": "sonsobi",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "serve": "node scripts/serve.mjs",
+    "live-check": "node --env-file=.env.local scripts/live-check.mjs",
+    "gas:push": "clasp push --force",
+    "gas:deploy": "clasp push --force && node --env-file=.env.local scripts/gas-deploy.mjs",
+    "icons": "node scripts/make-icons.mjs"
+  },
+  "devDependencies": {
+    "@google/clasp": "^3.4.1",
+    "playwright": "^1.63.0"
+  }
+}

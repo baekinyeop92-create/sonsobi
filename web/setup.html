@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>순소비 — 폰 자동화 만들기</title>
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f2f4f7">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0c0f14">
+<link rel="icon" href="./icons/icon-192.png" sizes="192x192" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<div class="wrap" style="max-width:760px">
+  <header class="topbar">
+    <div class="brand">
+      <h1>폰 자동화 만들기</h1>
+      <p>카드·은행 앱 알림이 오면 폰이 자동으로 내 구글 시트에 보내도록 설정합니다</p>
+    </div>
+    <div class="tools"><a class="btn" href="./">← 앱으로</a></div>
+  </header>
+
+  <section class="panel drawer">
+    <div class="flow"><span class="n">카드·은행 앱 알림</span>→<span class="n">폰 자동화</span>→<span class="n">내 구글 시트</span>→<span class="n">순소비 앱</span></div>
+    <p class="psub" style="margin:0">결제 내역은 내 구글 계정 밖으로 나가지 않습니다. 아래에 넣을 <b>받기 주소</b>와 <b>WRITE_TOKEN</b>은 설치를 끝낸 Claude Code가 마지막에 알려준 값을 씁니다. 이 값은 남에게 보여주지 마세요.</p>
+
+    <div class="tabs" role="tablist">
+      <button class="chipbtn" type="button" role="tab" data-ostab="ios" aria-pressed="true">아이폰</button>
+      <button class="chipbtn" type="button" role="tab" data-ostab="and" aria-pressed="false">안드로이드</button>
+    </div>
+
+    <div data-os="ios">
+      <ol class="setup">
+        <li><h3>단축어 자동화 만들기</h3>
+          <ul>
+            <li>iOS 27 이상이 필요합니다. <b>단축어 앱 › 자동화 › + › 알림</b></li>
+            <li>앱: 카드 앱 하나 선택 (현대카드, 신한 SOL페이, KB Pay …) · 필터: 메시지에 <code>원</code> 포함 · <b>즉시 실행</b> 선택</li>
+          </ul></li>
+        <li><h3>보내기 동작 넣기</h3>
+          <ul>
+            <li>동작 <b>URL의 콘텐츠 가져오기</b>: URL = <b>받기 주소</b>, 방법 = POST, 요청 본문 = <b>JSON</b></li>
+            <li>JSON 필드 4개: <code>k</code> = WRITE_TOKEN · <code>app</code> = 앱 이름(직접 입력) · <code>title</code> = 알림 › 제목 · <code>body</code> = 알림 › 본문</li>
+          </ul></li>
+        <li><h3>앱마다 반복</h3>
+          <p>카드·은행 앱마다 같은 자동화를 하나씩 만듭니다. 은행 앱을 넣어야 월세·적금 이체가 잡힙니다.</p>
+          <p class="psub">메뉴 이름은 iOS 버전에 따라 조금 다를 수 있어요. ‘즉시 실행’이 없으면 알림이 올 때 한 번 눌러줘야 합니다.</p></li>
+        <li><h3>확인</h3>
+          <p>카드로 한 번 결제해 보세요. 1분 안에 앱의 오늘 칸에 나타나면 성공입니다. 안 나타나면 자동화의 URL·JSON 필드를 다시 확인하세요.</p></li>
+      </ol>
+    </div>
+
+    <div data-os="and" hidden>
+      <ol class="setup">
+        <li><h3>MacroDroid 매크로 만들기</h3>
+          <ul>
+            <li><b>MacroDroid</b> 앱 설치 › 매크로 추가</li>
+            <li>트리거: <b>알림 › 알림 수신</b> → 카드·은행 앱 선택, 텍스트에 <code>원</code> 포함</li>
+          </ul></li>
+        <li><h3>보내기 동작 넣기</h3>
+          <ul>
+            <li>동작: <b>HTTP 요청</b> → 방식 POST, URL = <b>받기 주소</b></li>
+            <li>본문(콘텐츠)을 <b>폼(키-값)</b> 방식으로: <code>k</code> = WRITE_TOKEN · <code>app</code> = [not_app_name] · <code>title</code> = [not_title] · <code>body</code> = [notification]</li>
+            <li><b>k를 URL 쿼리에 넣지 마세요</b> — 반드시 본문에 넣습니다.</li>
+          </ul></li>
+        <li><h3>권한 설정</h3>
+          <p>MacroDroid에 알림 접근 권한을 켜고, 배터리 최적화에서 제외합니다.</p></li>
+        <li><h3>확인</h3>
+          <p>카드로 한 번 결제해 보세요. 1분 안에 앱의 오늘 칸에 나타나면 성공입니다.</p></li>
+      </ol>
+    </div>
+
+    <p class="psub" style="margin:0">알림 문구는 카드사마다 달라서 가맹점을 못 읽는 경우가 있습니다. 그런 알림은 앱의 ‘확인할 것 › 인식 못 한 알림’에 원문 그대로 모입니다.</p>
+  </section>
+</div>
+
+<script>
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ostab]'); if (!t) return;
+  document.querySelectorAll('[data-ostab]').forEach(b => b.setAttribute('aria-pressed', b === t));
+  document.querySelectorAll('[data-os]').forEach(d => { d.hidden = d.dataset.os !== t.dataset.ostab; });
+});
+</script>
+</body>
+</html>
